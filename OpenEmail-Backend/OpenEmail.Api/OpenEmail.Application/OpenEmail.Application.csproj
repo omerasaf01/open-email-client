@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="Common\Dtos\" />
+      <Folder Include="Common\Interfaces\" />
+      <Folder Include="Common\Mappings\" />
+      <Folder Include="Features\Authorization\Queries\" />
+      <Folder Include="Features\Emails\Commands\" />
+      <Folder Include="Features\Emails\Queries\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\OpenEmail.Domain\OpenEmail.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MediatR" Version="14.0.0" />
+    </ItemGroup>
+
+</Project>

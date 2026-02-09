@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="OpenEmail.Api/OpenEmail.Api.csproj" />
+  <Project Path="OpenEmail.Application/OpenEmail.Application.csproj" />
+  <Project Path="OpenEmail.Domain/OpenEmail.Domain.csproj" />
+  <Project Path="OpenEmail.Infrastructure/OpenEmail.Infrastructure.csproj" />
+</Solution>
