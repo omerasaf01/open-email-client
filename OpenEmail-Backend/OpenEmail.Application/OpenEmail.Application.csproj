@@ -7,10 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Common\Dtos\" />
-      <Folder Include="Common\Interfaces\" />
+      <Folder Include="Common\Extensions\" />
       <Folder Include="Common\Mappings\" />
-      <Folder Include="Features\Authorization\Queries\" />
       <Folder Include="Features\Emails\Commands\" />
       <Folder Include="Features\Emails\Queries\" />
     </ItemGroup>
@@ -20,7 +18,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MediatR" Version="14.0.0" />
+      <PackageReference Include="AutoMapper" Version="14.0.0" />
+      <PackageReference Include="FastEndpoints.Security" Version="7.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.23" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.12" />
     </ItemGroup>
 
 </Project>

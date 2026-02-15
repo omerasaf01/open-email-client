@@ -7,10 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="EmailProviders\Imap\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="MailKit" Version="4.14.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.12" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.12">

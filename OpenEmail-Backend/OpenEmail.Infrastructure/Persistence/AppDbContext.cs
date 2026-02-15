@@ -1,8 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using OpenEmail.Application.Common.Interfaces;
+using OpenEmail.Domain.Entities;
 
 namespace OpenEmail.Infrastructure.Persistence;
 
-public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IAppDbContext
 {
+    public DbSet<EmailAccount> EmailAccounts => Set<EmailAccount>();
     
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 }
