@@ -12,23 +12,22 @@ public class SignInCommandHandler(IAppDbContext dbContext, IEmailProviderFactory
     {
         var imapHost = Environment.GetEnvironmentVariable("IMAP_HOST");
         ArgumentException.ThrowIfNullOrWhiteSpace(imapHost);
-        var emailAccount = new EmailAccount
+        var emailAccountModel = new EmailAccount
         {
             Email = command.Email,
             ImapHost = imapHost,
             Password = command.Password,
         };
-        var emailClient = emailProviderFactory.GetProviderAsync(emailAccount);
+        var emailClient = emailProviderFactory.GetProviderAsync(emailAccountModel);
         await emailClient.ConnectAsync();
-        var accessToken = CreateAccessToken(command.Email);
-        emailAccount.AccessToken = accessToken;
-        await dbContext.EmailAccounts.AddAsync(emailAccount, ct);
+        var emailAccount = await dbContext.EmailAccounts.AddAsync(emailAccountModel, ct);
         await dbContext.SaveChangesAsync(ct);
+        var accessToken = CreateAccessToken(emailAccount.Entity);
 
         return new SignInResult(accessToken);
     }
 
-    private static string CreateAccessToken(string email)
+    private static string CreateAccessToken(EmailAccount emailAccount)
     {
         var signingKey = Environment.GetEnvironmentVariable("JWT_SECRET");
         ArgumentException.ThrowIfNullOrWhiteSpace(signingKey);
@@ -36,7 +35,7 @@ public class SignInCommandHandler(IAppDbContext dbContext, IEmailProviderFactory
         {
             opt.SigningKey = signingKey;
             opt.ExpireAt = DateTime.UtcNow.AddDays(1);
-            opt.User.Claims.Add(("Email", email));
+            opt.User.Claims.Add(("Id", emailAccount.Id.ToString()));
         });
 
         return jwtToken;

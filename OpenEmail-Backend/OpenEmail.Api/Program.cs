@@ -3,6 +3,7 @@ using FastEndpoints;
 using FastEndpoints.Security;
 using FastEndpoints.Swagger;
 using Microsoft.EntityFrameworkCore;
+using OpenEmail.Api.Middlewares;
 using OpenEmail.Application.Common.Interfaces;
 using OpenEmail.Infrastructure;
 
@@ -12,6 +13,13 @@ Env.Load();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(x => x.AddMaps(System.Reflection.Assembly.GetExecutingAssembly()));
 builder.Services.AddInfrastructure();
+builder.Services.AddCustomExceptionHandler(options =>
+{
+    options.LogStructuredException = true;
+    options.UseGenericReason = false; // Set to true in production to hide actual exception messages
+    options.IncludeExceptionType = true; // Set to false in production
+    options.IncludeRoute = true;
+});
 builder.Services.AddFastEndpoints()
     .AddResponseCaching()
     .SwaggerDocument(opt =>
@@ -35,7 +43,7 @@ var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 await db.Database.MigrateAsync();
 
 app.UseResponseCaching();
-app.UseDefaultExceptionHandler();
+app.UseCustomExceptionHandler();
 app.UseFastEndpoints().UseSwaggerGen();
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -21,8 +21,7 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
 
             await imapClient.ConnectAsync(
                 emailAccount.ImapHost,
-                emailAccount.ImapPort,
-                SecureSocketOptions.Auto);
+                emailAccount.ImapPort);
 
             Console.WriteLine("Connected, authenticating...");
 
@@ -34,6 +33,7 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
         }
         catch (Exception e)
         {
+            await DisconnectAsync();
             throw;
         }
     }

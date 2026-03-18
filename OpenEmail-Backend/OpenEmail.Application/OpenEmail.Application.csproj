@@ -7,10 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Common\Extensions\" />
       <Folder Include="Common\Mappings\" />
       <Folder Include="Features\Emails\Commands\" />
-      <Folder Include="Features\Emails\Queries\" />
     </ItemGroup>
 
     <ItemGroup>
