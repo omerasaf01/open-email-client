@@ -43,7 +43,7 @@ Example recommended scripts (in `package.json` of frontend):
 ```
 
 ### i18n suggestion
-- For route-level translations use Next.js i18n routing. For content translation consider `next-intl`.
+- For route-level translations, use Next.js i18n routing. For content translation consider `next-intl`.
 - Add `locales/en` and `locales/tr` for English/Turkish JSON resources.
 
 ### Contributing
