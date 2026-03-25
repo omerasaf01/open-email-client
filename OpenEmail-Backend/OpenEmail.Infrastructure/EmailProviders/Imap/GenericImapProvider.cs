@@ -87,6 +87,7 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
             throw new ArgumentException("Invalid UID");
 
         var message = await inbox.GetMessageAsync(uniqueId, ct);
+        await MarkAsReadAsync(uniqueId.ToString(), ct);
         await DisconnectAsync();
         var emailMessageDto = new EmailMessageDto
         {
@@ -121,7 +122,6 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
 
     public async Task MarkAsReadAsync(string uid, CancellationToken ct = default)
     {
-        await ConnectAsync();
         var inbox = imapClient.Inbox;
         await inbox.OpenAsync(FolderAccess.ReadWrite, ct);
 

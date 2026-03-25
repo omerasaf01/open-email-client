@@ -1,10 +1,18 @@
 import { http } from "@/lib/http";
 import type {
+  ApiEnvelope,
   EmailDetail,
+  EmailDetailDto,
+  EmailDetailResponseDto,
   EmailSummary,
+  InboxEmailSummaryDto,
+  InboxResponseDto,
   LoginInput,
   LoginResponse,
+  SignInRequestDto,
+  SignInResponseDto,
   SendEmailInput,
+  SendEmailRequestDto,
 } from "@/lib/types";
 
 const endpoints = {
@@ -35,25 +43,22 @@ function resolveEmailDetailEndpoint(id: string): string {
   return withId;
 }
 
-function unwrap<T>(payload: unknown): T {
-  const data = payload as Record<string, unknown>;
+function unwrap<T>(payload: T | ApiEnvelope<T>): T {
+  const data = payload as ApiEnvelope<T>;
 
-  if (data?.data) {
+  if (data?.data !== undefined) {
     return data.data as T;
   }
 
   return payload as T;
 }
 
-function resolveToken(payload: unknown): string {
-  const data = payload as Record<string, unknown>;
-  const nested = (data?.data ?? {}) as Record<string, unknown>;
+function resolveToken(payload: SignInResponseDto | ApiEnvelope<SignInResponseDto>): string {
+  const data = unwrap(payload);
 
   const token =
     data?.accessToken ??
     data?.token ??
-    nested?.accessToken ??
-    nested?.token ??
     data?.jwt;
 
   if (!token || typeof token !== "string") {
@@ -63,7 +68,7 @@ function resolveToken(payload: unknown): string {
   return token;
 }
 
-function mapEmailSummary(item: Record<string, unknown>): EmailSummary {
+function mapEmailSummary(item: InboxEmailSummaryDto): EmailSummary {
   return {
     id: String(item.id ?? item.emailId ?? ""),
     from: String(item.from ?? item.sender ?? item.fromAddress ?? "Unknown"),
@@ -103,7 +108,7 @@ function htmlToText(value: string): string {
     .trim();
 }
 
-function mapEmailDetail(item: Record<string, unknown>): EmailDetail {
+function mapEmailDetail(item: EmailDetailDto): EmailDetail {
   const rawBody = item.body ?? item.content;
   const fallbackBodyHtml = String(item.bodyHtml ?? "");
 
@@ -124,30 +129,36 @@ function mapEmailDetail(item: Record<string, unknown>): EmailDetail {
   };
 }
 
-function resolveEmailDetailPayload(payload: unknown): Record<string, unknown> {
-  const root = unwrap<Record<string, unknown>>(payload);
+function resolveEmailDetailPayload(payload: EmailDetailDto | EmailDetailResponseDto | ApiEnvelope<EmailDetailResponseDto>): EmailDetailDto {
+  const root = unwrap(payload as EmailDetailResponseDto | ApiEnvelope<EmailDetailResponseDto>) as EmailDetailDto | EmailDetailResponseDto;
+
+  if (root && "subject" in root) {
+    return root as EmailDetailDto;
+  }
+
+  const typedRoot = root as EmailDetailResponseDto;
   const candidates = [
-    root.message,
-    root.emailMessage,
-    root.item,
-    root.email,
+    typedRoot.message,
+    typedRoot.emailMessage,
+    typedRoot.item,
+    typedRoot.email,
   ];
 
   for (const candidate of candidates) {
-    if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
-      return candidate as Record<string, unknown>;
+    if (candidate) {
+      return candidate;
     }
   }
 
-  return root;
+  return {};
 }
 
-function resolveArray(payload: unknown): Record<string, unknown>[] {
+function resolveArray(payload: InboxEmailSummaryDto[] | InboxResponseDto | ApiEnvelope<InboxResponseDto>): InboxEmailSummaryDto[] {
   if (Array.isArray(payload)) {
-    return payload as Record<string, unknown>[];
+    return payload;
   }
 
-  const data = payload as Record<string, unknown>;
+  const data = unwrap(payload as InboxResponseDto | ApiEnvelope<InboxResponseDto>);
   const candidates = [
     data.emailSummaries,
     data.items,
@@ -157,7 +168,7 @@ function resolveArray(payload: unknown): Record<string, unknown>[] {
 
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
-      return candidate as Record<string, unknown>[];
+      return candidate;
     }
   }
 
@@ -165,27 +176,36 @@ function resolveArray(payload: unknown): Record<string, unknown>[] {
 }
 
 export async function login(input: LoginInput): Promise<LoginResponse> {
-  const response = await http.post(endpoints.login, input);
-  const payload = unwrap<Record<string, unknown>>(response.data);
+  const requestDto: SignInRequestDto = {
+    email: input.email,
+    password: input.password,
+  };
+  const response = await http.post<SignInResponseDto | ApiEnvelope<SignInResponseDto>>(endpoints.login, requestDto);
+  const payload = unwrap(response.data);
 
   return {
-    accessToken: resolveToken(payload),
+    accessToken: resolveToken(response.data),
     user: (payload.user ?? payload.profile) as LoginResponse["user"],
   };
 }
 
 export async function getInbox(): Promise<EmailSummary[]> {
-  const response = await http.get(endpoints.inbox);
+  const response = await http.get<InboxEmailSummaryDto[] | InboxResponseDto | ApiEnvelope<InboxResponseDto>>(endpoints.inbox);
   return resolveArray(response.data).map(mapEmailSummary);
 }
 
 export async function getEmailById(id: string): Promise<EmailDetail> {
   const target = resolveEmailDetailEndpoint(id);
-  const response = await http.get(target);
+  const response = await http.get<EmailDetailDto | EmailDetailResponseDto | ApiEnvelope<EmailDetailResponseDto>>(target);
 
   return mapEmailDetail(resolveEmailDetailPayload(response.data));
 }
 
 export async function sendEmail(input: SendEmailInput): Promise<void> {
-  await http.post(endpoints.sendEmail, input);
+  const requestDto: SendEmailRequestDto = {
+    to: input.to,
+    subject: input.subject,
+    body: input.body,
+  };
+  await http.post(endpoints.sendEmail, requestDto);
 }

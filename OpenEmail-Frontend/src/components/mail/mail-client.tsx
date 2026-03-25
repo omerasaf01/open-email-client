@@ -88,6 +88,8 @@ export function MailClient() {
     sendMutation.mutate(values);
   };
 
+  const isRefreshing = inboxQuery.isRefetching;
+
   return (
     <>
       <div className="mx-auto flex h-screen w-full max-w-[1400px] flex-col overflow-hidden p-4 md:p-6">
@@ -99,9 +101,9 @@ export function MailClient() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => inboxQuery.refetch()}>
-              <RefreshCw className="size-4" />
-              Yenile
+            <Button variant="outline" onClick={() => inboxQuery.refetch()} disabled={isRefreshing}>
+              <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              {isRefreshing ? "Yenileniyor..." : "Yenile"}
             </Button>
             <Button onClick={() => setComposeOpen(true)}>
               <MailPlus className="size-4" />
@@ -129,8 +131,8 @@ export function MailClient() {
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[340px_1fr]">
-          <Card className="min-h-0 border-black/10 bg-white/70 backdrop-blur-xl">
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+          <Card className="min-h-0 min-w-0 border-black/10 bg-white/70 backdrop-blur-xl">
             <CardHeader className="space-y-3">
               <CardTitle className="text-base">Inbox</CardTitle>
 
@@ -147,9 +149,9 @@ export function MailClient() {
 
             <Separator />
 
-            <CardContent className="min-h-0 flex-1 pt-4">
+            <CardContent className="min-h-0 min-w-0 flex-1 pt-4">
               <ScrollArea className="h-full pr-3">
-                <div className="space-y-2">
+                <div className="w-full space-y-2 pr-1">
                   {inboxQuery.isLoading && (
                     <div className="space-y-2">
                       <Skeleton className="h-20 w-full" />
@@ -175,14 +177,21 @@ export function MailClient() {
                       key={mail.id}
                       type="button"
                       onClick={() => setSelectedEmailId(mail.id)}
-                      className="w-full rounded-xl border border-transparent bg-muted/30 p-3 text-left transition hover:border-black/10 hover:bg-muted/60"
+                      className="w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-transparent bg-muted/30 p-3 text-left transition hover:border-black/10 hover:bg-muted/60 hover:cursor-pointer"
                     >
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-medium">{mail.from}</p>
-                        {!mail.isRead && <Badge className="text-[10px]">Yeni</Badge>}
+                      <div className="mb-1 flex min-w-0 items-center justify-between gap-2">
+                        <p className="min-w-0 flex-1 truncate break-all text-sm font-medium">{mail.from}</p>
+                        {!mail.isRead && (
+                          <Badge
+                            variant="default"
+                            className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase shadow-sm"
+                          >
+                            Okunmadi
+                          </Badge>
+                        )}
                       </div>
-                      <p className="truncate text-sm font-semibold">{mail.subject}</p>
-                      <p className="truncate text-xs text-muted-foreground">{mail.snippet}</p>
+                      <p className="truncate break-all text-sm font-semibold">{mail.subject}</p>
+                      <p className="truncate break-all text-xs text-muted-foreground">{mail.snippet}</p>
                     </button>
                   ))}
                 </div>
