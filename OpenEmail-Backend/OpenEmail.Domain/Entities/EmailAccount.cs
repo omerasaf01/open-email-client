@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using OpenEmail.Domain.Enums;
 
 namespace OpenEmail.Domain.Entities;
 
+[Index(nameof(Id))]
 public class EmailAccount
 {
     public Guid Id { get; set; }
@@ -13,7 +15,5 @@ public class EmailAccount
     public string SmtpHost { get; set; } = string.Empty;
     public int SmtpPort { get; set; } = 587;
     public bool SmtpUseSsl { get; set; } = true;
-    public string AccessToken { get; set; } = string.Empty;
-    public string RefreshToken { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 }

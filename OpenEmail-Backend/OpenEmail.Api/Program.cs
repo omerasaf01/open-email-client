@@ -10,6 +10,19 @@ using OpenEmail.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost3000", policyBuilder =>
+    {
+        policyBuilder
+            .WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(x => x.AddMaps(System.Reflection.Assembly.GetExecutingAssembly()));
 builder.Services.AddInfrastructure();
@@ -44,8 +57,9 @@ await db.Database.MigrateAsync();
 
 app.UseResponseCaching();
 app.UseCustomExceptionHandler();
-app.UseFastEndpoints().UseSwaggerGen();
 app.UseHttpsRedirection();
+app.UseCors("AllowLocalhost3000");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseFastEndpoints().UseSwaggerGen();
 app.Run();

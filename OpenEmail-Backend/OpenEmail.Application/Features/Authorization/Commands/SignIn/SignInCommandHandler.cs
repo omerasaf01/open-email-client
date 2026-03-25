@@ -21,6 +21,7 @@ public class SignInCommandHandler(IAppDbContext dbContext, IEmailProviderFactory
         var emailClient = emailProviderFactory.GetProviderAsync(emailAccountModel);
         await emailClient.ConnectAsync();
         var emailAccount = await dbContext.EmailAccounts.AddAsync(emailAccountModel, ct);
+        await emailClient.DisconnectAsync();
         await dbContext.SaveChangesAsync(ct);
         var accessToken = CreateAccessToken(emailAccount.Entity);
 

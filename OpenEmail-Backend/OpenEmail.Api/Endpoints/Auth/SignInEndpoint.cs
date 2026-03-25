@@ -12,6 +12,7 @@ public class SignInEndpoint(IMapper mapper) : Endpoint<SignInRequest, SignInResp
     {
         Post("/api/auth/signin");
         Summary(s => s.Summary = "Sign in to the application");
+        Tags("Authorization");
         AllowAnonymous();
     }
 

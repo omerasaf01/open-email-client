@@ -12,6 +12,8 @@ A minimal backend-first email client project. Backend (ASP.NET) is implemented; 
 ### Overview
 This repository contains the backend of the OpenEmail project (see `OpenEmail-Backend/`). The frontend will be a Next.js application located in `OpenEmail-Frontend/`.
 
+![Preview](/doc/preview.png)
+
 ### Quick start (backend)
 - Ensure .NET SDK is installed.
 - From `OpenEmail-Backend/OpenEmail.Api` run:

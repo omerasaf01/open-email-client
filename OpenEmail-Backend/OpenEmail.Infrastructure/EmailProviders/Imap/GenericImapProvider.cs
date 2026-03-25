@@ -43,12 +43,25 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
         await imapClient.DisconnectAsync(true);
     }
 
-    public async Task<List<EmailSummaryDto>> FetchInboxAsync(int count = 50, CancellationToken ct = default)
+    public async Task<List<EmailSummaryDto>> FetchInboxAsync(int count = 100, CancellationToken ct = default)
     {
         await ConnectAsync();
         var inbox = imapClient.Inbox;
         await inbox.OpenAsync(FolderAccess.ReadOnly, ct);
-        var messages = await inbox.FetchAsync(0, count, MessageSummaryItems.Full | MessageSummaryItems.UniqueId, ct);
+        
+        var total = inbox.Count;
+        
+        if (total == 0) 
+            return new List<EmailSummaryDto>();
+        
+        var startIndex = Math.Max(0, total - count);
+        var endIndex = total - 1;
+
+        var messages = await inbox.FetchAsync(startIndex, endIndex,
+            MessageSummaryItems.Full | MessageSummaryItems.UniqueId, ct);
+
+        messages = messages.OrderByDescending(m => m.InternalDate ?? m.Date).ToList();
+        
         await DisconnectAsync();
         var result = messages.Select(e => new EmailSummaryDto
         {
@@ -74,6 +87,7 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
             throw new ArgumentException("Invalid UID");
 
         var message = await inbox.GetMessageAsync(uniqueId, ct);
+        await DisconnectAsync();
         var emailMessageDto = new EmailMessageDto
         {
             Id = message.MessageId,
