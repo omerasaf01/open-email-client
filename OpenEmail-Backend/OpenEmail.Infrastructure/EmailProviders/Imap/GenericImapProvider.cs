@@ -1,6 +1,6 @@
 using MailKit;
 using MailKit.Net.Imap;
-using MailKit.Security;
+using MailKit.Net.Smtp;
 using MimeKit;
 using OpenEmail.Application.Common.Dtos;
 using OpenEmail.Application.Common.Interfaces;
@@ -18,17 +18,11 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
 
             imapClient.Timeout = 10000;
             imapClient.CheckCertificateRevocation = false;
-
-            await imapClient.ConnectAsync(
-                emailAccount.ImapHost,
-                emailAccount.ImapPort);
-
+            
+            await imapClient.ConnectAsync(emailAccount.ImapHost, emailAccount.ImapPort);
             Console.WriteLine("Connected, authenticating...");
 
-            await imapClient.AuthenticateAsync(
-                           emailAccount.Email,
-                           emailAccount.Password);
-
+            await imapClient.AuthenticateAsync(emailAccount.Email, emailAccount.Password);
             Console.WriteLine("Authenticated successfully");
         }
         catch (Exception e)
@@ -129,6 +123,24 @@ public class GenericImapProvider(ImapClient imapClient, EmailAccount emailAccoun
             throw new ArgumentException("Invalid UID");
 
         await inbox.AddFlagsAsync(uniqueId, MessageFlags.Seen, true, ct);
+    }
+
+    public async Task SendAsync(string to, string subject, string body, CancellationToken ct = default)
+    {
+        var email = new MimeMessage
+        {
+            From = { new MailboxAddress(emailAccount.Email, emailAccount.Email) },
+            Subject = subject,
+            Body = new TextPart("html") { Text = body },
+            To = { new MailboxAddress(to, to) },
+        };
+
+        using var client = new SmtpClient();
+        //client.CheckCertificateRevocation = false; - Only For Development Purposes
+        await client.ConnectAsync(emailAccount.SmtpHost, emailAccount.SmtpPort, emailAccount.SmtpUseSsl, ct);
+        await client.AuthenticateAsync(emailAccount.Email, emailAccount.Password, ct);
+        await client.SendAsync(email, ct);
+        await client.DisconnectAsync(true, ct);
     }
 
     public async Task DeleteAsync(string uid, CancellationToken ct = default)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -43,16 +43,21 @@ export function MailClient() {
   const [search, setSearch] = useState("");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const deferredSearch = useDeferredValue(search);
 
   const inboxQuery = useQuery({
     queryKey: ["emails", "inbox"],
     queryFn: getInbox,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const selectedEmailQuery = useQuery({
     queryKey: ["emails", "detail", selectedEmailId],
     queryFn: () => getEmailById(selectedEmailId ?? ""),
     enabled: Boolean(selectedEmailId),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const sendMutation = useMutation({
@@ -60,14 +65,14 @@ export function MailClient() {
     onSuccess: async () => {
       toast.success("Email gonderildi");
       setComposeOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["emails"] });
+      await queryClient.invalidateQueries({ queryKey: ["emails", "inbox"] });
     },
     onError: () => toast.error("Email gonderilemedi"),
   });
 
   const filteredEmails = useMemo(() => {
     const emails = inboxQuery.data ?? [];
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     if (!q) {
       return emails;
     }
@@ -76,7 +81,7 @@ export function MailClient() {
       const haystack = `${mail.from} ${mail.subject} ${mail.snippet}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [inboxQuery.data, search]);
+  }, [deferredSearch, inboxQuery.data]);
 
   const logout = () => {
     clearAccessToken();
@@ -93,7 +98,7 @@ export function MailClient() {
   return (
     <>
       <div className="mx-auto flex h-screen w-full max-w-[1400px] flex-col overflow-hidden p-4 md:p-6">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/70 p-3 shadow-lg backdrop-blur-xl">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/90 p-3 shadow-md">
           <div className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight">
             <Inbox className="size-5" />
             OpenEmail Inbox
@@ -132,7 +137,7 @@ export function MailClient() {
         </header>
 
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
-          <Card className="min-h-0 min-w-0 border-black/10 bg-white/70 backdrop-blur-xl">
+          <Card className="min-h-0 min-w-0 border-black/10 bg-white/90">
             <CardHeader className="space-y-3">
               <CardTitle className="text-base">Inbox</CardTitle>
 
@@ -199,7 +204,7 @@ export function MailClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-black/10 bg-white/70 backdrop-blur-xl">
+          <Card className="border-black/10 bg-white/90">
             <CardHeader>
               <CardTitle className="text-base">Mesaj Detayi</CardTitle>
             </CardHeader>
