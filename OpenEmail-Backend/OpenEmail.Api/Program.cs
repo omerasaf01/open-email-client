@@ -57,7 +57,10 @@ await db.Database.MigrateAsync();
 
 app.UseResponseCaching();
 app.UseCustomExceptionHandler();
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowLocalhost3000");
 app.UseAuthentication();
 app.UseAuthorization();

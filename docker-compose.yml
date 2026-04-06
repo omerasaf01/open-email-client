@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: openemail-postgres
+    environment:
+      POSTGRES_DB: openemail
+      POSTGRES_USER: openemail
+      POSTGRES_PASSWORD: openemail
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openemail -d openemail"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./OpenEmail-Backend
+      dockerfile: OpenEmail.Api/Dockerfile
+    container_name: openemail-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      CONNECTION_STRING: Host=postgres;Port=5432;Database=openemail;Username=openemail;Password=openemail
+      JWT_SECRET: please_change_this_jwt_secret_in_production
+      AES_KEY: 0123456789abcdef0123456789abcdef
+      AES_IV: abcdef0123456789
+      IMAP_HOST: mail.your_domain.com
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./OpenEmail-Frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
+    container_name: openemail-frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
